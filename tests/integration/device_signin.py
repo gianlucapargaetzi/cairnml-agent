@@ -17,6 +17,8 @@ def machine_environment(home: Path) -> dict:
     """The environment of a command that acts as the machine in home: its own HOME, and nothing of the test run's."""
     env = {key: value for key, value in os.environ.items() if not key.startswith(("CAIRNML_", "TRAINS_"))}
     env["HOME"] = str(home)
+    # the sign-in code is read from a pipe: unbuffered, or the line stays in the machine's buffer until it exits
+    env["PYTHONUNBUFFERED"] = "1"
     return env
 
 
