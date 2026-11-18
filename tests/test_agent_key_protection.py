@@ -8,8 +8,8 @@ import pytest
 
 from cairnml_agent.commands.worker import check_job_mounts, job_environment
 from cairnml_agent.idp.device import DEVICE_KEY_PATH, exposes_device_key, secure_folder
-from cairnml.idp.enrol import _replace_key
-from cairnml.idp.keys import generate_private_key
+from cairnml_agent.idp.enrol import _replace_key
+from cairnml_agent.idp.keys import generate_private_key
 
 
 def test_the_agent_folder_is_readable_by_its_owner_only(tmp_path):
@@ -74,3 +74,9 @@ def test_the_job_gets_its_own_token_and_never_the_agents_auth_token():
     assert env["CAIRNML_JOB_TOKEN_FILE"] == "/tmp/job_token"
     assert env["PATH"] == "/usr/bin"
     assert base["CAIRNML_AUTH_TOKEN"] == "agent-admin-token", "the agent's own environment is not changed"
+
+
+def test_an_impersonated_job_gets_the_task_owners_token():
+    env = job_environment({"CAIRNML_AUTH_TOKEN": "agent-admin-token"}, impersonated_token="owner-token")
+    assert env["CAIRNML_AUTH_TOKEN"] == "owner-token"
+    assert "CAIRNML_JOB_TOKEN" not in env
