@@ -4,9 +4,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from cairnml_agent.backend_api.session.callresult import CallResult
+from cairnml.backend_api.session.callresult import CallResult
 from cairnml.backend_api.session.client.client import APIClient
-from cairnml_agent.backend_api.session.request import Request
+from cairnml.backend_api.session.request import Request
 from cairnml_agent.backend_api.session.session import Session
 from cairnml_agent.backend_config.config import Config
 
