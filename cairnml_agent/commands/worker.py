@@ -32,8 +32,8 @@ import attr
 from pathlib import Path
 from urllib.parse import quote  # noqa
 
-from cairnml_agent.backend_api.services import queues as queues_api
-from cairnml_agent.backend_api.services import tasks as tasks_api
+from cairnml.backend_api.services import queues as queues_api
+from cairnml.backend_api.services import tasks as tasks_api
 from cairnml_agent.backend_api.session.callresult import CallResult
 from cairnml_agent.backend_api.session.request import Request
 from cairnml_agent.backend_api.session.defs import (
