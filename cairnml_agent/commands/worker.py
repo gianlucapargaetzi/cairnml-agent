@@ -478,7 +478,6 @@ def get_task(session, task_id, **kwargs):
         version="2.14",
         json={"id": [task_id], "search_hidden": True, **kwargs},
         method=Request.def_method,
-        async_enable=False,
     )
     result = CallResult.from_result(
         res=res,
@@ -511,7 +510,6 @@ def get_next_task(session, queue):
         version="2.14",
         json=request,
         method=Request.def_method,
-        async_enable=False,
     )
     if debug:
         print(f"debug> get_next_task: response {result.status_code} text {result.text}")
@@ -532,7 +530,6 @@ def get_task_fields(session, task_id, fields: list, log=None) -> dict:
         action="get_all",
         json={"id": [task_id], "only_fields": list(fields), "search_hidden": True},
         method=Request.def_method,
-        async_enable=False,
     )
     # noinspection PyBroadException
     try:
@@ -566,7 +563,6 @@ def get_task_container(session, task_id, ignore_match_rules=False, allow_force_c
             version="2.14",
             json={"id": [task_id], "only_fields": ["container"], "search_hidden": True},
             method=Request.def_method,
-            async_enable=False,
         )
         try:
             container = result.json()["data"]["tasks"][0]["container"] if result.ok else {}
@@ -678,7 +674,6 @@ def set_task_container(session, task_id, docker_image=None, docker_arguments=Non
             version="2.13",
             json={"task": task_id, "container": container, "force": True},
             method=Request.def_method,
-            async_enable=False,
         )
         return result.ok
     else:
