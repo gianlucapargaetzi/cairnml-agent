@@ -10,6 +10,7 @@ enrolled client home, so the test process itself never imports the SDK.
 """
 
 import json
+import os
 import re
 import signal
 import socket
@@ -46,9 +47,14 @@ print(f"job finished: epochs = {parameters['epochs']}")
 
 CREATE_AND_QUEUE = """\
 import json, sys
+from pathlib import Path
+
+import cairnml
 from cairnml import Task
 
 project, name, repo, queue = sys.argv[1:5]
+# the SDK of this environment, from its source tree: the job installs that tree, never a released package
+sdk_source = Path(cairnml.__file__).resolve().parents[1]
 task = Task.create(
     project_name=project,
     task_name=name,
@@ -56,7 +62,7 @@ task = Task.create(
     branch="main",
     script="train.py",
     working_directory=".",
-    packages=[],
+    packages=[f"cairnml @ {sdk_source.as_uri()}"],
     add_task_init_call=False,
     detect_repository=False,
 )
@@ -233,11 +239,11 @@ def daemon(agent_home, chain):
     finally:
         if process.poll() is None:
             # the daemon runs in its own session: its whole group is stopped, by the process id this test started
-            signal.killpg(process.pid, signal.SIGTERM)
+            os.killpg(process.pid, signal.SIGTERM)
             try:
                 process.wait(timeout=30)
             except subprocess.TimeoutExpired:
-                signal.killpg(process.pid, signal.SIGKILL)
+                os.killpg(process.pid, signal.SIGKILL)
                 process.wait(timeout=10)
 
 
