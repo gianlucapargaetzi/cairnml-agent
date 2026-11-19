@@ -191,17 +191,19 @@ def test_requests_carry_the_bearer_token_and_the_agent_identity_headers(monkeypa
     headers = wire.calls[-1]["headers"]
     assert headers["Authorization"] == f"Bearer {session.token}"
     assert headers["X-CairnML-Worker"] == session.worker
-    assert headers["X-CairnML-Agent"] == f"api-{__version__}"
+    # the SDK adds the server's version to the client string once it has signed in
+    assert f"api-{__version__}" in headers["X-CairnML-Agent"]
 
 
-def test_the_legacy_trains_header_names_are_still_sent(monkeypatch, tmp_path, wire):
+def test_the_trains_header_names_are_no_longer_sent(monkeypatch, tmp_path, wire):
+    """Characterised as sent before the swap. The SDK sends its own names only; the server reads none of them."""
     session = make_session(monkeypatch, tmp_path, host=HOST)
     wire.calls.clear()
     session.send_request("projects", "get_all")
 
     headers = wire.calls[-1]["headers"]
-    assert headers["X-Trains-Worker"] == session.worker
-    assert headers["X-Trains-Agent"] == f"api-{__version__}"
+    assert "X-Trains-Worker" not in headers
+    assert "X-Trains-Agent" not in headers
 
 
 def test_a_version_less_request_has_no_version_in_its_url(monkeypatch, tmp_path, wire):
@@ -257,7 +259,8 @@ def test_the_execute_command_keeps_the_configured_connect_retries_at_start_up(mo
 
 def test_the_server_api_level_is_read_from_the_token(monkeypatch, tmp_path, wire):
     make_session(monkeypatch, tmp_path, host=HOST, auth_token=token(api_version="2.9", feature_set="basic"))
-    assert Session.api_version == "2.9"
+    # the SDK keeps the server's level in max_api_version; api_version is the level the SDK's client is generated for
+    assert Session.max_api_version == "2.9"
     assert Session.feature_set == "basic"
 
 
@@ -282,12 +285,13 @@ def test_the_session_does_not_load_the_server_vaults_at_start_up(monkeypatch, tm
     assert [c["url"] for c in wire.calls if "get_vaults" in c["url"]] == []
 
 
-def test_a_forced_api_version_switch_is_honoured(monkeypatch, tmp_path, wire):
-    """Characterised for the swap: the SDK has no forced version by design, so this switch is dropped there."""
-    monkeypatch.setattr(Session, "force_max_api_version", "2.20")
+def test_the_forced_api_version_switch_is_dropped(monkeypatch, tmp_path, wire):
+    """Characterised as honoured before the swap (CAIRNML_FORCE_MAX_API_VERSION set the server level). The SDK has no
+    forced version by design, so the switch is dropped: the server's own level stands."""
+    monkeypatch.setenv("CAIRNML_FORCE_MAX_API_VERSION", "2.20")
     make_session(monkeypatch, tmp_path, host=HOST, auth_token=token(api_version="2.30", feature_set="basic"))
-    assert Session.api_version == "2.20"
-    assert Session.max_api_version == "2.20"
+    assert not hasattr(Session, "force_max_api_version")
+    assert Session.max_api_version == "2.30"
 
 
 # ---- sign-in rules (which credential is used) ---------------------------------------------------------------------
