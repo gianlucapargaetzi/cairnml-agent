@@ -1361,11 +1361,7 @@ class Worker(ServiceCommandSection):
         )
 
         docker_image = None
-        worker_id = (
-            "{}:service:{}".format(self.worker_id, task_id)
-            if self._services_mode
-            else self.worker_id
-        )
+        worker_id = "{}:service:{}".format(self.worker_id, task_id) if self._services_mode else self.worker_id
 
         if self.docker_image_func:
             # noinspection PyBroadException
@@ -1458,7 +1454,6 @@ class Worker(ServiceCommandSection):
                 docker_params["docker_arguments"] = docker_args_template_resolver.resolve_from_docker_cmd(
                     full_docker_cmd=docker_params["docker_arguments"]
                 )
-
 
             full_docker_cmd = self.docker_image_func(env_task_id=task_id, **docker_params)
 
@@ -1793,7 +1788,6 @@ class Worker(ServiceCommandSection):
         self.is_daemon = True
 
         self._worker_tags = kwargs.get("child_report_tags", None)
-
 
         self._standalone_mode = kwargs.get("standalone_mode", False)
         self._polling_interval = ENV_QUEUE_POLL_FREQ_SEC.get() or max(kwargs.get("polling_interval", 5), 5)
@@ -4511,9 +4505,7 @@ class Worker(ServiceCommandSection):
             self._host_ssh_cache = mkdtemp(prefix="cairnml_agent.ssh.")
             self._temp_cleanup_list.append(self._host_ssh_cache)
 
-        return temp_config, partial(
-            self._get_docker_config_cmd, temp_config=temp_config
-        )
+        return temp_config, partial(self._get_docker_config_cmd, temp_config=temp_config)
 
     def _get_docker_config_cmd(self, temp_config, **kwargs):
         self.debug("Setting up docker config command")
