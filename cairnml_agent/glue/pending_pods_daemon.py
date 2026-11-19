@@ -209,7 +209,7 @@ class PendingPodsDaemon(K8sDaemon):
                     tasks = {}
                 status = get_path(tasks, "tasks", 0, "status")
                 if status == "in_progress":
-                    # the enqueue carries force, which the generated request does not declare: still sent by hand
+                    # hand-built: the server reads force (apiserver/services/tasks.py:1025), tasks.enqueue 2.31 does not declare it
                     result = self._session.send_request(
                         service="tasks",
                         action="enqueue",
@@ -228,6 +228,7 @@ class PendingPodsDaemon(K8sDaemon):
             payload = {"task": task_id, "status_message": "K8S glue status: {}".format(msg)}
             if tags:
                 payload["tags"] = tags
+            # hand-built: the server reads status_message (apiserver/services/tasks.py:707-715), tasks.update 2.1 does not declare it
             result = self._session.send_request("tasks", "update", json=payload, method=Request.def_method)
             if not result.ok:
                 result_msg = get_path(result.json(), "meta", "result_msg")

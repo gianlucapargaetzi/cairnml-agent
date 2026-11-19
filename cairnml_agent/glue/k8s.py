@@ -35,7 +35,6 @@ from cairnml_agent.helper.hash import md5
 from cairnml_agent.helper.process import stringify_bash_output
 from cairnml_agent.helper.resource_monitor import ResourceMonitor
 from cairnml_agent.interface.base import ObjectID
-from cairnml.backend_api.session.request import Request
 from cairnml.backend_api.services import queues as queues_api
 from cairnml.backend_api.services import tasks as tasks_api
 from cairnml_agent.glue.definitions import (
@@ -1272,18 +1271,14 @@ class K8sIntegration(Worker):
                 continue
             try:
                 if status == "queued":
-                    self._session.get(
-                        service="tasks",
-                        action="dequeue",
-                        json={
-                            "task": task_id,
-                            "force": True,
-                            "status_reason": "Pod deleted (not pending or running)",
-                            "status_message": "{} deleted by agent {}".format(
+                    self._session.send_api(
+                        self._session.current(tasks_api.DequeueRequest)(
+                            task=task_id,
+                            status_reason="Pod deleted (not pending or running)",
+                            status_message="{} deleted by agent {}".format(
                                 self.kind.capitalize(), self.worker_id or "unknown"
                             ),
-                        },
-                        method=Request.def_method,
+                        )
                     )
                 self._session.send_api(
                     self._session.current(tasks_api.FailedRequest)(

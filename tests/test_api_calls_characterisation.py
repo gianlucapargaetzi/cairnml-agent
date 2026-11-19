@@ -415,7 +415,7 @@ def test_the_worker_unregisters_from_its_queues():
     Worker._unregister(stub, queues=["q-1"])
     assert stub._worker_registered is False
     [call] = session.of("workers.unregister")
-    assert call.json == {"worker": "worker-1", "queues": ["q-1"]}
+    assert call.json == {"worker": "worker-1"}
 
 
 def test_the_workers_list_asks_for_every_worker_ever_seen(capsys):
@@ -536,14 +536,12 @@ def test_the_resource_report_goes_to_the_workers_service():
     monitor.session = session
     monitor._worker_id = "worker-1"
     monitor._worker_tags = ["t"]
-    monitor._report_daemon = True
     monitor._run_mode = "venv"
-    monitor._machine_capacity = lambda: {}
     monitor.get_report = lambda: SimpleNamespace(to_dict=lambda: {"task": "task-1"})
-    assert monitor.send_report(stats={"cpu": 1}) is True
+    assert monitor.send_report(stats={"memory_used": 1.5, "network_tx_mbs": 2.0}) is True
     [call] = session.of("workers.status_report")
     assert call.json["worker"] == "worker-1" and call.json["task"] == "task-1" and call.json["run_mode"] == "venv"
-    assert call.json["tags"] == ["t"] and call.json["machine_stats"] == {"cpu": 1}
+    assert call.json["tags"] == ["t"] and call.json["machine_stats"] == {"memory_used": 1.5}
 
 
 def test_a_refused_resource_report_is_not_sent():
@@ -552,9 +550,7 @@ def test_a_refused_resource_report_is_not_sent():
     monitor.session = session
     monitor._worker_id = "worker-1"
     monitor._worker_tags = []
-    monitor._report_daemon = False
     monitor._run_mode = "venv"
-    monitor._machine_capacity = lambda: {}
     monitor.get_report = lambda: SimpleNamespace(to_dict=lambda: {})
     assert monitor.send_report(stats=None) is False
 
@@ -713,12 +709,17 @@ def test_a_task_of_a_deleted_pod_that_is_stale_is_failed_and_one_that_is_queued_
     [dequeue] = session.of("tasks.dequeue")
     assert dequeue.json == {
         "task": "task-1",
+        "status_reason": "Pod deleted (not pending or running)",
+        "status_message": "Pod deleted by agent worker-1",
+        "remove_from_all_queues": False,
+    }
+    [failed] = session.of("tasks.failed")
+    assert failed.json == {
+        "task": "task-1",
         "force": True,
         "status_reason": "Pod deleted (not pending or running)",
         "status_message": "Pod deleted by agent worker-1",
     }
-    [failed] = session.of("tasks.failed")
-    assert failed.json == dequeue.json
 
 
 def test_a_task_that_could_not_be_put_back_in_its_queue_is_failed_and_moved_to_the_front():

@@ -35,7 +35,6 @@ from urllib.parse import quote  # noqa
 from cairnml.backend_api.services import queues as queues_api
 from cairnml.backend_api.services import tasks as tasks_api
 from cairnml.backend_api.services import workers as workers_api
-from cairnml.backend_api.session.request import Request
 from cairnml.idp.device import secure_folder
 from cairnml_agent.backend_api.session.defs import (
     ENV_ENABLE_ENV_CONFIG_SECTION,
@@ -1897,7 +1896,6 @@ class Worker(ServiceCommandSection):
             first_report_sec=3.0,
             report_frequency_sec=self._machine_update_interval,
             worker_tags=None if self._services_mode else self._worker_tags,
-            report_daemon=self.is_daemon,
             run_mode=self._run_mode,
         )
         self.monitor.set_report(report)
@@ -3876,13 +3874,7 @@ class Worker(ServiceCommandSection):
     def _unregister(self, queues=()):
         self.queues = ()
         try:
-            # hand-built on purpose: the generated unregister request declares only the worker, not the queues
-            self._session.send_request(
-                service="workers",
-                action="unregister",
-                json={"worker": self.worker_id, "queues": queues},
-                method=Request.def_method,
-            )
+            self._session.send_api(self._session.current(workers_api.UnregisterRequest)(worker=self.worker_id))
             self._worker_registered = False
         except Exception as e:
             self.log("Worker failed unregistering itself with backend service: {}".format(e))

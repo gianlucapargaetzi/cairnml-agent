@@ -136,14 +136,19 @@ def test_no_version_literal_is_passed_to_a_call_or_a_feature_check():
 # The calls that stay hand-built, by the function they are in, each with the generator or server issue that blocks
 # its conversion. A call that is converted leaves this list; a new hand-built call fails the test below.
 HAND_BUILT = {
-    ("cairnml_agent/helper/resource_monitor.py", "send_report"): "workers.status_report: the generated request has no "
-    "machine_capacity and no is_daemon, which the agent sends and the server schema does not declare",
-    ("cairnml_agent/helper/repo.py", "request_git_token"): "devices.git_token: the server sends a url with the answer "
-    "(repository_access.token_for), which the generated response does not declare",
-    ("cairnml_agent/glue/pending_pods_daemon.py", "_update_pending_task_msg"): "tasks.update has no status_message, "
-    "and tasks.enqueue has no force: both are sent by the agent",
-    ("cairnml_agent/glue/k8s.py", "_cleanup_old_pods"): "tasks.dequeue has no force, which the agent sends",
-    ("cairnml_agent/commands/worker.py", "_unregister"): "workers.unregister declares no queues, which the agent sends",
+    # the server answers a url (apiserver/bll/repository_access.py:279,283,288) and the endpoint returns that dict
+    # unchanged (apiserver/services/devices.py:282-314, apiserver/service_repo/apicall.py:632); the response schema
+    # (apiserver/schema/services/devices.conf:227-241) declares token, expires_at and username only
+    ("cairnml_agent/helper/repo.py", "request_git_token"): "devices.git_token: the server answers a url the response "
+    "schema does not declare",
+    # the server reads status_message (apiserver/services/tasks.py:707-715) and force (tasks.py:1025), and the schemas
+    # tasks.update 2.1 (apiserver/schema/services/tasks.conf:1669-1721) and tasks.enqueue 2.31 (tasks.conf:3516-3595)
+    # declare neither field the agent sends
+    (
+        "cairnml_agent/glue/pending_pods_daemon.py",
+        "_update_pending_task_msg",
+    ): "tasks.update: status_message is read by "
+    "the server and not declared; tasks.enqueue: force is read by the server and not declared",
 }
 
 
