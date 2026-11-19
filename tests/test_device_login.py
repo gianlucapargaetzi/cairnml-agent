@@ -4,7 +4,7 @@ import hashlib
 import pytest
 
 from cairnml.idp.browser_login import LoginFailed, LoginPortBusy
-from cairnml_agent.idp.device_login import device_login
+from cairnml.idp.device_login import browser_or_device_login, device_login
 
 
 class Reply:
@@ -147,9 +147,7 @@ def test_an_unknown_token_error_is_reported_by_its_code():
 
 
 def test_the_cli_uses_the_device_code_when_asked_or_when_no_browser_is_there(monkeypatch):
-    from cairnml_agent.idp.device_login import browser_or_device_login
-
-    import cairnml_agent.idp.device_login as mod
+    import cairnml.cli.enrolment as mod
 
     monkeypatch.setattr(mod.sys, "platform", "linux")
     monkeypatch.delenv("DISPLAY", raising=False)
@@ -173,7 +171,7 @@ def test_the_cli_uses_the_device_code_when_asked_or_when_no_browser_is_there(mon
 
 
 def test_a_busy_browser_port_falls_back_to_the_device_code(monkeypatch):
-    import cairnml_agent.idp.device_login as module
+    import cairnml.idp.device_login as module
 
     def busy_browser(issuer, client_id, **kwargs):
         raise LoginPortBusy("port 8765 on 127.0.0.1 is in use")
@@ -187,7 +185,7 @@ def test_a_busy_browser_port_falls_back_to_the_device_code(monkeypatch):
 
 
 def test_other_browser_failures_are_not_replaced_by_the_device_code(monkeypatch):
-    import cairnml_agent.idp.device_login as module
+    import cairnml.idp.device_login as module
 
     def refused(issuer, client_id, **kwargs):
         raise LoginFailed("not allowed")
