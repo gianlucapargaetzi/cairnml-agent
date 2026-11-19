@@ -9,6 +9,7 @@ from unittest import mock
 import jwt
 import pytest
 import requests
+from cairnml.backend_api.session.session import Session as SdkSession
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from cairnml_agent.backend_api.config import load
@@ -51,7 +52,8 @@ def isolated_session_state(monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     # the local files were named from the home folder when the agent was imported: point the config at no file
     monkeypatch.setenv("CAIRNML_CONFIG_FILE", str(tmp_path / "no-such.conf"))
-    saved = {name: getattr(Session, name) for name in CLASS_ATTRIBUTES if hasattr(Session, name)}
+    # the server facts are set on the class that reads the token: the agent's, or the SDK's session it is built on
+    saved = {cls: {n: vars(cls)[n] for n in CLASS_ATTRIBUTES if n in vars(cls)} for cls in (Session, SdkSession)}
     for var in (
         "CAIRNML_API_HOST",
         "CAIRNML_AUTH_TOKEN",
@@ -65,8 +67,12 @@ def isolated_session_state(monkeypatch, tmp_path):
     ):
         monkeypatch.delenv(var, raising=False)
     yield
-    for name, value in saved.items():
-        setattr(Session, name, value)
+    for cls, values in saved.items():
+        for name in CLASS_ATTRIBUTES:
+            if name in values:
+                setattr(cls, name, values[name])
+            elif name in vars(cls):
+                delattr(cls, name)
 
 
 @pytest.fixture
