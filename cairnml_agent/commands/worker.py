@@ -2875,7 +2875,7 @@ class Worker(ServiceCommandSection):
                 name_only=True,
                 dir=(ENV_TEMP_STDOUT_FILE_DIR.get() or None),
             )
-            self.dump_config(filename=self.temp_config_path, config=self._session.pre_vault_config)
+            self.dump_config(filename=self.temp_config_path)
             self._session._config_file = self.temp_config_path
 
         worker_params = WorkerParams(
