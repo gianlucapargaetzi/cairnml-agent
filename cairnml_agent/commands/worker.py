@@ -36,6 +36,7 @@ from cairnml.backend_api.services import queues as queues_api
 from cairnml.backend_api.services import tasks as tasks_api
 from cairnml.backend_api.session.callresult import CallResult
 from cairnml.backend_api.session.request import Request
+from cairnml.idp.device import secure_folder
 from cairnml_agent.backend_api.session.defs import (
     ENV_ENABLE_ENV_CONFIG_SECTION,
     ENV_ENABLE_FILES_CONFIG_SECTION,
@@ -177,7 +178,7 @@ from cairnml_agent.helper.repo import (
 from cairnml_agent.helper.resource_monitor import ResourceMonitor
 from cairnml_agent.helper.singleton import Singleton
 from cairnml_agent.helper.docker_args import DockerArgsSanitizer, DockerArgsTemplateResolver
-from cairnml_agent.idp.device import DEVICE_KEY_PATH, exposes_device_key, secure_folder
+from cairnml_agent.idp.device import DEVICE_KEY_PATH, exposes_device_key
 from cairnml_agent.session import Session
 from .events import Events
 from cairnml_agent.commands import bootstrap
