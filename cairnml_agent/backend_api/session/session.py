@@ -43,6 +43,8 @@ INITIAL_CONNECT_RETRIES = 4
 class Session(SdkSession):
     """The agent's session. Its constructor takes the arguments of the agent's commands."""
 
+    # the agent has no offline mode: the SDK's switch would stop it from connecting, so it does not apply here
+    _offline_mode = False
     _CLIENT_HEADER = "X-CairnML-Agent"
     _client: ClassVar[list] = [("api", __version__)]
     # the agent's request time-outs (the SDK's are longer)

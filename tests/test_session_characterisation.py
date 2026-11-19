@@ -374,6 +374,16 @@ def test_a_refused_device_exchange_is_a_login_error_with_the_server_reason(monke
 # ---- after start-up: the session keeps going over transport errors --------------------------------------------------
 
 
+def test_the_sdk_offline_switch_does_not_stop_the_agent(monkeypatch, tmp_path, wire):
+    """The agent never had an offline mode; the SDK's switch is kept from it."""
+    monkeypatch.setattr(SdkSession, "_offline_mode", True, raising=False)
+    session = make_session(monkeypatch, tmp_path, host=HOST)
+    wire.calls.clear()
+    reply = session.send_request("projects", "get_all")
+    assert reply is not None
+    assert len(wire.calls) == 1
+
+
 def test_after_start_up_a_dropped_connection_is_retried_until_it_answers(monkeypatch, tmp_path, wire):
     session = make_session(monkeypatch, tmp_path, host=HOST)
     wire.calls.clear()
