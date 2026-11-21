@@ -24,6 +24,7 @@ REFUSED_STATUS_CODES = (401, 403, 404)
 def request_job_token(session, task_id):
     """The job's token and its lifetime in seconds, issued by the server to this agent while the task runs here.
     None when the server refuses for good (401, 403 or 404). Any other failure is raised."""
+    session.send_request("tasks", "get_all", {})
     try:
         data = session.send_api(session.current(devices_api.JobTokenRequest)(task=task_id)).to_dict()
     except APIError as ex:
