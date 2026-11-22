@@ -125,6 +125,7 @@ from cairnml_agent.helper.console import print_text, decode_binary_lines
 from cairnml_agent.helper.environment.converters import strtobool
 from cairnml.utilities.gpu_query import detect_rocm_env
 from cairnml_agent.helper.os.daemonize import daemonize_process
+from cairnml_agent.helper.installed_wheel import installed_distribution, wheel_from_installed
 from cairnml_agent.helper.package.base import PackageManager, get_specific_package_version
 from cairnml_agent.helper.package.conda_api import CondaAPI
 from cairnml_agent.helper.package.external_req import ExternalRequirements, OnlyExternalRequirements
@@ -413,13 +414,26 @@ def build_local_wheel(source: Path, name: str) -> str:
     return _LOCAL_WHEELS[key]
 
 
+def installed_wheel(dist) -> str:
+    """The wheel repacked from the installed distribution ``dist``, once per process like ``build_local_wheel``."""
+    key = "installed:{}:{}".format(dist.metadata["Name"], dist.locate_file(""))
+    if key not in _LOCAL_WHEELS:
+        _LOCAL_WHEELS[key] = wheel_from_installed(dist, mkdtemp(prefix="cairnml-wheel-"))
+    return _LOCAL_WHEELS[key]
+
+
 def local_agent_wheel() -> str:
-    """The wheel of this cairnml-agent, built from the source tree it runs from."""
+    """The wheel of this cairnml-agent: repacked from its installed files when it is installed, otherwise built from
+    the source tree it runs from."""
+    dist = installed_distribution("cairnml-agent", Path(__file__).resolve().parents[1])
+    if dist is not None:
+        return installed_wheel(dist)
     return build_local_wheel(Path(__file__).resolve().parents[2], "cairnml-agent")
 
 
 def local_sdk_wheel() -> str:
-    """The wheel of the CairnML SDK this machine has, built from its source tree.
+    """The wheel of the CairnML SDK this machine has: repacked from its installed files when it is installed, otherwise
+    built from its source tree.
 
     The SDK is found through its package path (it can be a namespace package, with no __file__); its source tree is
     the first folder above the package that is a source tree of the SDK (see ``is_source_tree``).
@@ -427,10 +441,17 @@ def local_sdk_wheel() -> str:
     import cairnml
 
     for package_dir in cairnml.__path__:
+        dist = installed_distribution("cairnml", Path(package_dir).resolve())
+        if dist is not None:
+            return installed_wheel(dist)
+    for package_dir in cairnml.__path__:
         for folder in [Path(package_dir).resolve(), *Path(package_dir).resolve().parents]:
             if is_source_tree(folder, "cairnml"):
                 return build_local_wheel(folder, "cairnml")
-    raise CommandFailedError("no source tree of cairnml above the CairnML SDK package: cannot build its wheel")
+    raise CommandFailedError(
+        "neither an installed distribution nor a source tree of cairnml above the CairnML SDK package: "
+        "cannot build its wheel"
+    )
 
 
 def get_repo_auth_string(user, password):
